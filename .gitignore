@@ -1,0 +1,7 @@
+CascadeProjects/
+ResizeTool/
+quizProj/
+*.pyc
+__pycache__/
+.DS_Store
+.env
