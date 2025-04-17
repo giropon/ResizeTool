@@ -17,7 +17,6 @@ GUIでドラッグ＆ドロップ操作に対応しています。
 
 ```
 pip install -r requirements.txt
-pip install tkinterdnd2
 ```
 
 ## 使い方
