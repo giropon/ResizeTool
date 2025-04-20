@@ -12,14 +12,14 @@ class ImageResizerApp:
         self.root.title('画像リサイズツール')
         self.root.geometry('480x300')
         self.file_path = StringVar()
-        self.width = StringVar(value='330')
-        self.height = StringVar(value='330')
+        self.width = StringVar(value='320')
+        self.height = StringVar(value='320')
         self.status = StringVar()
 
         # ドラッグ＆ドロップ対応
         self.dnd_frame = Frame(root, width=400, height=60, bg='#e0e0e0')
         self.dnd_frame.place(x=40, y=20)
-        self.dnd_frame_label = Label(self.dnd_frame, text='ここにフォルダまたはzipファイルをドロップ', bg='#e0e0e0')
+        self.dnd_frame_label = Label(self.dnd_frame, text='ここにフォルダ、zipファイル、またはpngファイルをドロップ', bg='#e0e0e0')
         self.dnd_frame_label.pack(expand=True, fill='both')
         self.dnd_frame.drop_target_register(DND_FILES)
         self.dnd_frame.dnd_bind('<<Drop>>', self.handle_drop)
@@ -51,7 +51,7 @@ class ImageResizerApp:
     def run_resize(self):
         path = self.file_path.get()
         if not path:
-            self.status.set('ファイルまたはフォルダを選択してください')
+            self.status.set('フォルダ、zipファイル、またはpngファイルを選択してください')
             return
         try:
             width = int(self.width.get())
@@ -66,10 +66,26 @@ class ImageResizerApp:
                 self.process_folder(path, width, height)
             elif zipfile.is_zipfile(path):
                 self.process_zip(path, width, height)
+            elif path.lower().endswith('.png') and os.path.isfile(path):
+                self.process_single_file(path, width, height)
             else:
-                self.status.set('フォルダまたはzipファイルを選択してください')
+                self.status.set('フォルダ、zipファイル、またはpngファイルを選択してください')
                 return
             self.status.set('完了')
+        except Exception as e:
+            self.status.set(f'エラー: {e}')
+
+    def process_single_file(self, file_path, width, height):
+        """
+        pngファイル単体のリサイズ処理
+        """
+        import os
+        out_path = os.path.splitext(file_path)[0] + '_out.png'
+        try:
+            with Image.open(file_path) as img:
+                img = img.resize((width, height), Image.LANCZOS)
+                img.save(out_path)
+            self.status.set(f'保存先: {out_path}')
         except Exception as e:
             self.status.set(f'エラー: {e}')
 
@@ -79,7 +95,7 @@ class ImageResizerApp:
         png_files = [os.path.join(dp, f) for dp, dn, filenames in os.walk(folder_path) for f in filenames if f.lower().endswith('.png')]
         total = len(png_files)
         if total == 0:
-            self.status.set('pngファイルが見つかりません')
+            self.status.set('pngファイルが見つかりません（サブフォルダも含めて検索）')
             return
         self.progress['maximum'] = total
         for i, f in enumerate(png_files, 1):
